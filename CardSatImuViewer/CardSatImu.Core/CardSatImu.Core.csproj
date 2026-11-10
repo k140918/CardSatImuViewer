@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ビューアとゲームで共通に使う部品（シリアル受信・クォータニオン・基板モデル） -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>CardSatImu.Core</RootNamespace>
+  </PropertyGroup>
+
+  <!-- 基板の画像（Gerber から生成）。pack://application:,,,/CardSatImu.Core;component/Assets/... で読む -->
+  <ItemGroup>
+    <Resource Include="Assets\*.png" />
+    <!-- 部品の 3D モデル（KiCad の GLB から tools/convert_glb.py で作成） -->
+    <Resource Include="Assets\*.bin.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,10 @@
+* text=auto
+*.cs     text diff=csharp
+*.xaml   text
+*.csproj text
+*.slnx   text
+*.sln    text eol=crlf
+*.py     text
+*.png    binary
+*.gz     binary
+*.glb    binary

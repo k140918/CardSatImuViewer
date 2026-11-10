@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- CardSat 姿勢合わせミッション（セミナー用ゲーム） -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>CardSatAttitudeGame</RootNamespace>
+    <AssemblyTitle>CardSat Attitude Control Mission</AssemblyTitle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CardSatImu.Core\CardSatImu.Core.csproj" />
+  </ItemGroup>
+
+</Project>

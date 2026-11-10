@@ -1,0 +1,161 @@
+<Window x:Class="CardSatImuViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="CardSat IMU Viewer" Height="760" Width="1120" MinHeight="480" MinWidth="760"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="MinWidth" Value="80" />
+        </Style>
+        <Style x:Key="AngleLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="AngleValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+        <Style x:Key="Swatch" TargetType="Border">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Margin" Value="0,2,8,2" />
+            <Setter Property="CornerRadius" Value="2" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- 操作ボタン -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8">
+            <TextBlock Text="COM ポート" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <ComboBox x:Name="PortCombo" Width="110" VerticalAlignment="Center" />
+            <Button x:Name="RefreshButton" Content="更新" Click="RefreshButton_Click" MinWidth="50" />
+            <Button x:Name="ConnectButton" Content="接続" Click="ConnectButton_Click" />
+            <Separator Margin="8,0" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+            <Button x:Name="ResetButton" Content="姿勢リセット" Click="ResetButton_Click"
+                    ToolTip="今の姿勢を基準（水平・正面）にする" />
+            <Button x:Name="CalibButton" Content="零点校正" Click="CalibButton_Click"
+                    ToolTip="基板へ 'c' を送り、角速度の零点を再校正する（基板は静止させておく）" />
+        </StackPanel>
+
+        <!-- 状態表示 -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="未接続" />
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="RateText" Text="" FontFamily="Consolas" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="5" />
+                <RowDefinition Height="150" MinHeight="60" />
+            </Grid.RowDefinitions>
+
+            <!-- 左：数値と凡例 -->
+            <ScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="12,4,12,8">
+                    <TextBlock Text="基板の姿勢（基板計算値）" FontWeight="Bold" Margin="0,0,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition /><RowDefinition /><RowDefinition />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="roll"  Style="{StaticResource AngleLabel}" />
+                        <TextBlock Grid.Row="1" Text="pitch" Style="{StaticResource AngleLabel}" />
+                        <TextBlock Grid.Row="2" Text="yaw"   Style="{StaticResource AngleLabel}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="RollText"  Text="---" Style="{StaticResource AngleValue}" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="PitchText" Text="---" Style="{StaticResource AngleValue}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="YawText"   Text="---" Style="{StaticResource AngleValue}" />
+                    </Grid>
+
+                    <TextBlock Text="クォータニオン (w, x, y, z)" FontWeight="Bold" Margin="0,14,0,4" />
+                    <TextBlock x:Name="QuatText" Text="---" FontFamily="Consolas" />
+
+                    <TextBlock x:Name="ReferenceText" Text="基準：未設定（地上座標で表示）"
+                               Margin="0,10,0,0" TextWrapping="Wrap" Foreground="DimGray" />
+
+                    <TextBlock Text="機体軸" FontWeight="Bold" Margin="0,16,0,4" />
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchAxisX" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="+X：B 列の長辺の方向" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchAxisY" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="+Y：ESP32-S3 側の短辺の方向" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchAxisZ" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="+Z：部品面の外向き" />
+                    </StackPanel>
+
+                    <TextBlock Text="基板の辺" FontWeight="Bold" Margin="0,12,0,4" />
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchEdgeA" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="A 列の長辺" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchEdgeB" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="B 列の長辺" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchEdgeUsb" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="USB-C 側の短辺（裏面に USB-C ×2）" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchTop" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="部品面（白レジスト）" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Border x:Name="SwatchBottom" Style="{StaticResource Swatch}" />
+                        <TextBlock Text="裏面（太陽電池 ×2）" />
+                    </StackPanel>
+
+                    <TextBlock Text="マウスホイールで拡大・縮小" Foreground="DimGray" Margin="0,14,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 中央：3D 表示（背景付きの Border でホイール操作を受ける） -->
+            <Border Grid.Row="0" Grid.Column="1" x:Name="ViewportHost" Background="#FF202428"
+                    MouseWheel="ViewportHost_MouseWheel" ClipToBounds="True">
+                <Viewport3D x:Name="Viewport">
+                    <Viewport3D.Camera>
+                        <PerspectiveCamera x:Name="Camera" FieldOfView="40"
+                                           UpDirection="0,1,0" NearPlaneDistance="5" FarPlaneDistance="5000" />
+                    </Viewport3D.Camera>
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <Model3DGroup>
+                                <AmbientLight Color="#FF6A6A6A" />
+                                <DirectionalLight Color="#FFB0B0B0" Direction="-0.4,-1,-0.6" />
+                                <DirectionalLight Color="#FF505050" Direction="0.6,0.4,0.8" />
+                            </Model3DGroup>
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+                </Viewport3D>
+            </Border>
+
+            <GridSplitter Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" Background="#FFDDDDDD" />
+
+            <!-- 下：メッセージログ -->
+            <ListBox x:Name="LogList" Grid.Row="2" Grid.ColumnSpan="2"
+                     FontFamily="Consolas" FontSize="12" BorderThickness="0,1,0,0" />
+        </Grid>
+    </DockPanel>
+</Window>

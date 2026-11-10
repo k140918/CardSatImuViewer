@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CardSatImu.Core/CardSatImu.Core.csproj" />
+  <Project Path="CardSatImuViewer/CardSatImuViewer.csproj" />
+  <Project Path="CardSatAttitudeGame/CardSatAttitudeGame.csproj" />
+</Solution>

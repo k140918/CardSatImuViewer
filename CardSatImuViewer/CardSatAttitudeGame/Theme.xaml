@@ -1,0 +1,294 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ================================================================
+         宇宙ミッション管制テーマ
+         紺の宇宙 + シアンの計器 + 成功はオレンジ
+         ================================================================ -->
+
+    <!-- 色 -->
+    <Color x:Key="CyanColor">#FF3DE0FF</Color>
+    <Color x:Key="CyanDimColor">#FF2A8FB0</Color>
+    <Color x:Key="AmberColor">#FFFFB547</Color>
+    <Color x:Key="OrangeColor">#FFFF8A3D</Color>
+    <Color x:Key="RedColor">#FFFF4F64</Color>
+    <Color x:Key="GreenColor">#FF4DFFA6</Color>
+    <Color x:Key="TextMainColor">#FFE6F4FF</Color>
+    <Color x:Key="TextSubColor">#FF8FB3C9</Color>
+
+    <SolidColorBrush x:Key="CyanBrush" Color="{StaticResource CyanColor}" />
+    <SolidColorBrush x:Key="CyanDimBrush" Color="{StaticResource CyanDimColor}" />
+    <SolidColorBrush x:Key="AmberBrush" Color="{StaticResource AmberColor}" />
+    <SolidColorBrush x:Key="OrangeBrush" Color="{StaticResource OrangeColor}" />
+    <SolidColorBrush x:Key="RedBrush" Color="{StaticResource RedColor}" />
+    <SolidColorBrush x:Key="GreenBrush" Color="{StaticResource GreenColor}" />
+    <SolidColorBrush x:Key="TextMainBrush" Color="{StaticResource TextMainColor}" />
+    <SolidColorBrush x:Key="TextSubBrush" Color="{StaticResource TextSubColor}" />
+    <SolidColorBrush x:Key="PanelBgBrush" Color="#B3081226" />
+    <SolidColorBrush x:Key="PanelLineBrush" Color="#553DE0FF" />
+    <SolidColorBrush x:Key="GlassBrush" Color="#E6081226" />
+
+    <!-- 書体：英数字は Bahnschrift（計器らしい字形）、日本語は BIZ UDP ゴシック（読みやすさ優先） -->
+    <FontFamily x:Key="HudFont">Bahnschrift, BIZ UDPGothic, Yu Gothic UI</FontFamily>
+    <FontFamily x:Key="JpFont">BIZ UDPGothic, Yu Gothic UI, Meiryo UI</FontFamily>
+
+    <DropShadowEffect x:Key="CyanGlow" Color="{StaticResource CyanColor}" ShadowDepth="0" BlurRadius="14" Opacity="0.9" />
+    <DropShadowEffect x:Key="OrangeGlow" Color="{StaticResource OrangeColor}" ShadowDepth="0" BlurRadius="18" Opacity="0.9" />
+    <DropShadowEffect x:Key="SoftGlow" Color="{StaticResource CyanColor}" ShadowDepth="0" BlurRadius="28" Opacity="0.35" />
+
+    <!-- ================================================================
+         文字
+         ================================================================ -->
+    <Style x:Key="HudLabel" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource HudFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+
+    <Style x:Key="HudNumber" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource HudFont}" />
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="Effect" Value="{StaticResource CyanGlow}" />
+    </Style>
+
+    <Style x:Key="SubText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource JpFont}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSubBrush}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="StepHeader" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource JpFont}" />
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Margin" Value="0,18,0,8" />
+    </Style>
+
+    <!-- ================================================================
+         計器パネル：四隅の L 字ブラケット + 見出し（Tag）
+         BorderBrush を変えると、ブラケットと見出しの色が変わる
+         ================================================================ -->
+    <Style x:Key="HudPanel" TargetType="ContentControl">
+        <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <Border Background="{StaticResource PanelBgBrush}"
+                                BorderBrush="{StaticResource PanelLineBrush}"
+                                BorderThickness="1" />
+                        <!-- 四隅 -->
+                        <Path Data="M0,18 L0,0 L18,0" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" />
+                        <Path Data="M0,0 L18,0 L18,18" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2"
+                              HorizontalAlignment="Right" VerticalAlignment="Top" />
+                        <Path Data="M0,0 L0,18 L18,18" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2"
+                              HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                        <Path Data="M18,0 L18,18 L0,18" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2"
+                              HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                        <DockPanel Margin="16,12,16,14">
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
+                                <Rectangle Width="7" Height="7" Fill="{TemplateBinding BorderBrush}"
+                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                           Foreground="{TemplateBinding BorderBrush}"
+                                           FontFamily="{StaticResource HudFont}" FontSize="14" />
+                            </StackPanel>
+                            <ContentPresenter />
+                        </DockPanel>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================================================================
+         ボタン
+         ================================================================ -->
+    <Style x:Key="HudButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="Background" Value="#1F3DE0FF" />
+        <Setter Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource JpFont}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Padding" Value="18,7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            CornerRadius="3" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#403DE0FF" />
+                            <Setter TargetName="Bd" Property="Effect" Value="{StaticResource CyanGlow}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#703DE0FF" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.35" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#FF1A0D00" />
+        <Setter Property="FontFamily" Value="{StaticResource HudFont}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="34,12" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#FFFFC870" Offset="0" />
+                    <GradientStop Color="#FFFF8A3D" Offset="1" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="#FFFFE2B0" BorderThickness="1" CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <!-- 上半分の光沢 -->
+                        <Border CornerRadius="4,4,0,0" VerticalAlignment="Top" Height="18" Margin="1"
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#66FFFFFF" Offset="0" />
+                                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="White" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.3" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================================================================
+         選択カード（難易度）と小さなチップ（COM ポート）
+         ================================================================ -->
+    <Style x:Key="DifficultyCard" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Margin" Value="0,0,8,8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" Background="#0F3DE0FF" BorderBrush="{StaticResource PanelLineBrush}"
+                            BorderThickness="1" CornerRadius="4" Padding="14,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse x:Name="Dot" Width="12" Height="12" Stroke="{StaticResource CyanBrush}"
+                                     StrokeThickness="1.5" VerticalAlignment="Top" Margin="0,5,12,0" />
+                            <ContentPresenter Grid.Column="1" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#263DE0FF" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#383DE0FF" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                            <Setter TargetName="Bd" Property="Effect" Value="{StaticResource CyanGlow}" />
+                            <Setter TargetName="Dot" Property="Fill" Value="{StaticResource CyanBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PortChip" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource HudFont}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Margin" Value="0,0,6,6" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" Background="#0F3DE0FF" BorderBrush="{StaticResource PanelLineBrush}"
+                            BorderThickness="1" CornerRadius="12" Padding="14,4">
+                        <ContentPresenter HorizontalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#263DE0FF" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#503DE0FF" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================================================================
+         入力欄
+         ================================================================ -->
+    <Style x:Key="HudTextBox" TargetType="TextBox">
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource CyanBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource CyanBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource JpFont}" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd" Background="#33000000" BorderBrush="{StaticResource PanelLineBrush}"
+                            BorderThickness="1" CornerRadius="3" Padding="10,6">
+                        <ScrollViewer x:Name="PART_ContentHost" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

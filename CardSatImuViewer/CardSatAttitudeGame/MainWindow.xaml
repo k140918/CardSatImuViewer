@@ -1,0 +1,395 @@
+<Window x:Class="CardSatAttitudeGame.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:CardSatAttitudeGame"
+        Title="CardSat 姿勢合わせミッション"
+        Width="1440" Height="860" MinWidth="1100" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="#FF02040C"
+        FontFamily="{StaticResource JpFont}"
+        Foreground="{StaticResource TextMainBrush}"
+        KeyDown="Window_KeyDown"
+        Closing="Window_Closing">
+
+    <Grid>
+        <!-- ===== 背景：星空と地球 ===== -->
+        <local:SpaceBackground />
+
+        <!-- ===== 計器（HUD） ===== -->
+        <Grid x:Name="HudLayer" Margin="28,18,28,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- 上：タイトル・時間・成功数・通信状態 -->
+            <Grid Grid.Row="0" Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Grid Width="44" Height="44" Margin="0,0,14,0">
+                        <Ellipse Stroke="{StaticResource CyanBrush}" StrokeThickness="1.5" Effect="{StaticResource CyanGlow}" />
+                        <Ellipse Margin="9" Stroke="{StaticResource CyanBrush}" StrokeThickness="1" Opacity="0.6" />
+                        <Rectangle Width="14" Height="9" Fill="{StaticResource CyanBrush}" RenderTransformOrigin="0.5,0.5">
+                            <Rectangle.RenderTransform>
+                                <RotateTransform Angle="-30" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+                    </Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="CARDSAT V002 ・ MISSION CONTROL" Style="{StaticResource HudLabel}" />
+                        <TextBlock Text="ATTITUDE CONTROL MISSION" FontFamily="{StaticResource HudFont}"
+                                   FontSize="26" Effect="{StaticResource SoftGlow}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="MISSION TIME ／ のこり時間" Style="{StaticResource HudLabel}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="TimerText" Text="01:00" Style="{StaticResource HudNumber}"
+                               FontSize="56" HorizontalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <StackPanel Margin="0,0,30,0">
+                        <TextBlock Text="DOCKED ／ 成功" Style="{StaticResource HudLabel}" HorizontalAlignment="Right" />
+                        <TextBlock x:Name="ScoreText" Text="00" Style="{StaticResource HudNumber}" FontSize="46"
+                                   HorizontalAlignment="Right" RenderTransformOrigin="0.5,0.5" />
+                    </StackPanel>
+                    <StackPanel VerticalAlignment="Center" MinWidth="150">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="LinkLed" Width="11" Height="11" Fill="{StaticResource RedBrush}" Margin="0,0,9,0" />
+                            <TextBlock x:Name="LinkText" Text="NO LINK" FontFamily="{StaticResource HudFont}" FontSize="16" />
+                        </StackPanel>
+                        <TextBlock x:Name="ModeText" Text="" Style="{StaticResource HudLabel}" Margin="20,4,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- 中：目標 ／ ゲージ ／ いまの基板 -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="330" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <ContentControl x:Name="TargetPanel" Grid.Column="0" Style="{StaticResource HudPanel}"
+                                Tag="TARGET ATTITUDE ／ 目標の姿勢">
+                    <Grid>
+                        <Border x:Name="TargetViewHost" />
+                        <TextBlock x:Name="TargetNoText" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                   FontFamily="{StaticResource HudFont}" FontSize="16"
+                                   Foreground="{StaticResource TextSubBrush}" />
+                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                Background="#B3050A18" CornerRadius="3" Padding="12,6"
+                                BorderBrush="{StaticResource PanelLineBrush}" BorderThickness="1">
+                            <TextBlock x:Name="TargetHintText" FontSize="18" Text="" />
+                        </Border>
+                    </Grid>
+                </ContentControl>
+
+                <!-- 中央のゲージ -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Grid Width="300" Height="300">
+                        <Ellipse Margin="20">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Color="#303DE0FF" Offset="0" />
+                                    <GradientStop Color="#103DE0FF" Offset="0.7" />
+                                    <GradientStop Color="#003DE0FF" Offset="1" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <local:RingGauge x:Name="AccuracyRing" Thickness="12" ShowTicks="True" />
+                        <local:RingGauge x:Name="HoldRing" Margin="48" Thickness="7"
+                                         RingBrush="{StaticResource GreenBrush}" TrackBrush="#00000000" />
+                        <StackPanel x:Name="CenterReadout" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="ERROR ／ ズレ" Style="{StaticResource HudLabel}" HorizontalAlignment="Center" />
+                            <TextBlock x:Name="ErrorText" Text="---" Style="{StaticResource HudNumber}"
+                                       FontSize="58" HorizontalAlignment="Center" />
+                            <TextBlock x:Name="ToleranceText" Text="" Style="{StaticResource SubText}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock x:Name="CountdownText" Text="" FontFamily="{StaticResource HudFont}" FontSize="130"
+                                   FontWeight="SemiBold" Foreground="{StaticResource OrangeBrush}"
+                                   Effect="{StaticResource OrangeGlow}" Opacity="0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False" />
+                    </Grid>
+                    <TextBlock x:Name="StatusText" Text="STANDBY" FontFamily="{StaticResource HudFont}" FontSize="30"
+                               HorizontalAlignment="Center" Margin="0,14,0,0" Foreground="{StaticResource CyanBrush}"
+                               Effect="{StaticResource CyanGlow}" />
+                    <TextBlock x:Name="StatusSubText" Text="" FontSize="18" HorizontalAlignment="Center"
+                               Margin="0,4,0,0" TextAlignment="Center" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <ContentControl x:Name="LivePanel" Grid.Column="2" Style="{StaticResource HudPanel}"
+                                Tag="CARDSAT LIVE ／ いまの基板">
+                    <Grid>
+                        <Border x:Name="LiveViewHost" />
+                        <Border VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                Background="#B3050A18" CornerRadius="3" Padding="12,6"
+                                BorderBrush="{StaticResource PanelLineBrush}" BorderThickness="1">
+                            <TextBlock x:Name="LiveHintText" FontSize="18" Text="" />
+                        </Border>
+                    </Grid>
+                </ContentControl>
+            </Grid>
+
+            <!-- 下：管制からのメッセージ -->
+            <Border Grid.Row="2" Margin="0,14,0,0" Background="#99050A18" CornerRadius="3"
+                    BorderBrush="{StaticResource PanelLineBrush}" BorderThickness="1" Padding="16,9">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="MISSION CONTROL ›" FontFamily="{StaticResource HudFont}"
+                               FontSize="16" Foreground="{StaticResource CyanBrush}" Margin="0,0,14,0"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="KeyHelpText" DockPanel.Dock="Right" Text="" FontSize="14"
+                               Foreground="{StaticResource TextSubBrush}" VerticalAlignment="Center" />
+                    <TextBlock x:Name="MessageText" Text="" FontSize="18" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===== 演出用の重ね合わせ ===== -->
+        <Rectangle x:Name="FlashRect" Fill="{StaticResource OrangeBrush}" Opacity="0" IsHitTestVisible="False" />
+
+        <!-- 走査線（ごく薄く） -->
+        <Rectangle IsHitTestVisible="False" Opacity="0.5">
+            <Rectangle.Fill>
+                <DrawingBrush TileMode="Tile" Viewport="0,0,2,3" ViewportUnits="Absolute"
+                              Viewbox="0,0,2,3" ViewboxUnits="Absolute">
+                    <DrawingBrush.Drawing>
+                        <GeometryDrawing Brush="#10FFFFFF">
+                            <GeometryDrawing.Geometry>
+                                <RectangleGeometry Rect="0,0,2,1" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+
+        <!-- 成功時のバナー -->
+        <StackPanel x:Name="DockedBanner" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Opacity="0" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" Margin="0,0,0,220">
+            <TextBlock Text="DOCKING COMPLETE" FontFamily="{StaticResource HudFont}" FontSize="64" FontWeight="SemiBold"
+                       Foreground="{StaticResource OrangeBrush}" Effect="{StaticResource OrangeGlow}"
+                       HorizontalAlignment="Center" />
+            <TextBlock x:Name="DockedBannerSub" Text="" FontSize="26" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- カウントダウン中の案内 -->
+        <Border x:Name="InstructionBanner" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,120,0,0"
+                Background="{StaticResource GlassBrush}" BorderBrush="{StaticResource AmberBrush}" BorderThickness="1"
+                CornerRadius="4" Padding="28,14" Visibility="Collapsed" IsHitTestVisible="False">
+            <StackPanel>
+                <TextBlock Text="STAND BY ／ 基準の向きに置いてください" FontFamily="{StaticResource HudFont}" FontSize="16"
+                           Foreground="{StaticResource AmberBrush}" HorizontalAlignment="Center" />
+                <TextBlock Text="部品面を上 ・ A 列を奥 ・ USB-C を左" FontSize="28" FontWeight="Bold"
+                           HorizontalAlignment="Center" Margin="0,6,0,0" />
+                <TextBlock Text="（左の「目標の姿勢」と同じ向き。0 になった瞬間の向きが基準になります）" FontSize="15"
+                           Foreground="{StaticResource TextSubBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- ===== ロビー（ブリーフィング） ===== -->
+        <Grid x:Name="LobbyOverlay" Background="#8C020610">
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" Margin="30">
+                <Border Width="1200" Background="{StaticResource GlassBrush}" BorderBrush="{StaticResource PanelLineBrush}"
+                        BorderThickness="1" CornerRadius="6" Padding="40,30" Effect="{StaticResource SoftGlow}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="620" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="MISSION BRIEFING" Style="{StaticResource HudLabel}" FontSize="15" />
+                            <TextBlock Text="姿勢合わせミッション" FontSize="42" FontWeight="Bold" Margin="0,4,0,8" />
+                            <TextBlock Style="{StaticResource SubText}" FontSize="16" LineHeight="26">
+                                左の「目標の姿勢」と同じ向きに CardSat を動かそう。
+                                ズレが小さくなって内側のリングが緑になったら、そのまま 1 秒キープ。ドッキング成功！
+                                60 秒で何回成功できるかを競います。
+                            </TextBlock>
+
+                            <!-- 01 接続 -->
+                            <TextBlock Text="01　通信リンクをつなぐ" Style="{StaticResource StepHeader}" />
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                                    <Button x:Name="RefreshButton" Content="更新" Style="{StaticResource HudButton}"
+                                            Click="RefreshButton_Click" Margin="0,0,8,0" />
+                                    <Button x:Name="ConnectButton" Content="接続" Style="{StaticResource HudButton}"
+                                            Click="ConnectButton_Click" MinWidth="90" />
+                                </StackPanel>
+                                <WrapPanel x:Name="PortList" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <TextBlock x:Name="LinkStatusText" Style="{StaticResource SubText}" Margin="0,2,0,0" />
+
+                            <!-- 02 零点校正 -->
+                            <TextBlock Text="02　ジャイロの零点校正" Style="{StaticResource StepHeader}" />
+                            <DockPanel>
+                                <Button x:Name="CalibButton" DockPanel.Dock="Right" Content="零点校正"
+                                        Style="{StaticResource HudButton}" Click="CalibButton_Click" VerticalAlignment="Center" />
+                                <TextBlock Style="{StaticResource SubText}" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    基板を机に置いて手をはなし、動かさない状態で押してください。
+                                </TextBlock>
+                            </DockPanel>
+
+                            <!-- 03 難易度 -->
+                            <TextBlock Text="03　難易度をえらぶ" Style="{StaticResource StepHeader}" />
+                            <UniformGrid Columns="2">
+                                <RadioButton GroupName="Difficulty" Tag="Easy" IsChecked="True"
+                                             Style="{StaticResource DifficultyCard}" Checked="Difficulty_Checked">
+                                    <StackPanel>
+                                        <TextBlock Text="やさしい" FontSize="19" FontWeight="Bold" />
+                                        <TextBlock Text="90° 刻みの姿勢　許容 20°" Style="{StaticResource SubText}" FontSize="13" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton GroupName="Difficulty" Tag="Normal"
+                                             Style="{StaticResource DifficultyCard}" Checked="Difficulty_Checked">
+                                    <StackPanel>
+                                        <TextBlock Text="ふつう" FontSize="19" FontWeight="Bold" />
+                                        <TextBlock Text="ランダムな姿勢　許容 15°" Style="{StaticResource SubText}" FontSize="13" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton GroupName="Difficulty" Tag="Hard"
+                                             Style="{StaticResource DifficultyCard}" Checked="Difficulty_Checked">
+                                    <StackPanel>
+                                        <TextBlock Text="むずかしい" FontSize="19" FontWeight="Bold" />
+                                        <TextBlock Text="ランダム　許容 10°　ヒントなし" Style="{StaticResource SubText}" FontSize="13" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton GroupName="Difficulty" Tag="Practice"
+                                             Style="{StaticResource DifficultyCard}" Checked="Difficulty_Checked">
+                                    <StackPanel>
+                                        <TextBlock Text="れんしゅう" FontSize="19" FontWeight="Bold" />
+                                        <TextBlock Text="時間制限なし　Space で目標をとばす" Style="{StaticResource SubText}" FontSize="13" />
+                                    </StackPanel>
+                                </RadioButton>
+                            </UniformGrid>
+
+                            <!-- 04 名前 -->
+                            <TextBlock Text="04　パイロット名" Style="{StaticResource StepHeader}" />
+                            <TextBox x:Name="NameBox" Style="{StaticResource HudTextBox}" MaxLength="12"
+                                     Width="340" HorizontalAlignment="Left" />
+
+                            <!-- 出発 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,28,0,0">
+                                <Button x:Name="StartButton" Style="{StaticResource PrimaryButton}"
+                                        Content="MISSION START  ▶" Click="StartButton_Click" />
+                                <TextBlock x:Name="StartHint" Style="{StaticResource SubText}" FontSize="15"
+                                           VerticalAlignment="Center" Margin="20,0,0,0" Width="250" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- ランキング -->
+                        <ContentControl Grid.Column="2" Style="{StaticResource HudPanel}" Tag="HALL OF FAME ／ ランキング">
+                            <DockPanel Margin="0,6,0,0">
+                                <TextBlock x:Name="RankingTitle" DockPanel.Dock="Top" FontSize="20" FontWeight="Bold"
+                                           Margin="0,0,0,10" />
+                                <Grid DockPanel.Dock="Top" Margin="6,0,6,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="70" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="順位" Style="{StaticResource SubText}" FontSize="12" />
+                                    <TextBlock Grid.Column="1" Text="パイロット" Style="{StaticResource SubText}" FontSize="12" />
+                                    <TextBlock Grid.Column="2" Text="成功" Style="{StaticResource SubText}" FontSize="12"
+                                               HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Column="3" Text="平均" Style="{StaticResource SubText}" FontSize="12"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                                <TextBlock x:Name="RankingNote" DockPanel.Dock="Bottom" Style="{StaticResource SubText}"
+                                           FontSize="13" Margin="0,8,0,0" />
+                                <ItemsControl x:Name="RankingList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="6,5" Margin="0,0,0,3" Background="{Binding RowBrush}" CornerRadius="3">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="60" />
+                                                        <ColumnDefinition Width="70" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Rank}" Foreground="{Binding RankBrush}"
+                                                               FontFamily="{StaticResource HudFont}" FontSize="19" FontWeight="Bold" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="16"
+                                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Docked}" FontFamily="{StaticResource HudFont}"
+                                                               FontSize="19" HorizontalAlignment="Right" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding Average}" FontFamily="{StaticResource HudFont}"
+                                                               FontSize="14" Foreground="{StaticResource TextSubBrush}"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DockPanel>
+                        </ContentControl>
+                    </Grid>
+                </Border>
+            </Viewbox>
+        </Grid>
+
+        <!-- ===== 結果 ===== -->
+        <Grid x:Name="ResultOverlay" Background="#8C020610" Visibility="Collapsed">
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" Margin="30">
+                <Border x:Name="ResultCard" Width="780" Background="{StaticResource GlassBrush}"
+                        BorderBrush="{StaticResource OrangeBrush}" BorderThickness="1" CornerRadius="6"
+                        Padding="44,34" Effect="{StaticResource OrangeGlow}" RenderTransformOrigin="0.5,0.5">
+                    <StackPanel>
+                        <TextBlock Text="MISSION COMPLETE" FontFamily="{StaticResource HudFont}" FontSize="18"
+                                   Foreground="{StaticResource OrangeBrush}" HorizontalAlignment="Center" />
+                        <TextBlock Text="ミッション終了" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        <TextBlock x:Name="ResultModeText" Style="{StaticResource SubText}" FontSize="16"
+                                   HorizontalAlignment="Center" Margin="0,6,0,0" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
+                            <TextBlock x:Name="ResultScoreText" Text="0" FontFamily="{StaticResource HudFont}" FontSize="120"
+                                       FontWeight="SemiBold" Foreground="{StaticResource OrangeBrush}"
+                                       Effect="{StaticResource OrangeGlow}" />
+                            <TextBlock Text="回&#x0a;ドッキング成功" FontSize="24" VerticalAlignment="Bottom"
+                                       Margin="16,0,0,26" LineHeight="32" />
+                        </StackPanel>
+
+                        <UniformGrid Columns="2" Margin="40,6,40,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="AVERAGE ／ 平均" Style="{StaticResource HudLabel}" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="ResultAvgText" Text="---" Style="{StaticResource HudNumber}" FontSize="34"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="BEST ／ 最速" Style="{StaticResource HudLabel}" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="ResultBestText" Text="---" Style="{StaticResource HudNumber}" FontSize="34"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </UniformGrid>
+
+                        <TextBlock x:Name="ResultRankText" FontSize="28" FontWeight="Bold"
+                                   Foreground="{StaticResource AmberBrush}" HorizontalAlignment="Center" Margin="0,22,0,0" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,28,0,0">
+                            <Button Content="もう一度  ▶" Style="{StaticResource PrimaryButton}" FontSize="22"
+                                    Click="Retry_Click" />
+                            <Button Content="タイトルへ" Style="{StaticResource HudButton}" FontSize="18"
+                                    Click="ToTitle_Click" Margin="18,0,0,0" Padding="26,10" />
+                        </StackPanel>
+                        <TextBlock Text="Enter：もう一度　Esc：タイトルへ" Style="{StaticResource SubText}" FontSize="13"
+                                   HorizontalAlignment="Center" Margin="0,14,0,0" />
+                    </StackPanel>
+                </Border>
+            </Viewbox>
+        </Grid>
+    </Grid>
+</Window>
